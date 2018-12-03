@@ -2,32 +2,35 @@
 	"name": "@straits/create",
 	"version": "1.0.2",
 	"description": "npm initializer for straits",
-	"bin": "index.js",
-	"directories": {
-		"test": "test"
-	},
+	"bin": "src/index.js",
 	"scripts": {
-		"lint": "eslint index.js",
-		"prepare": "npm run lint"
+		"pretest": "eslint index.js"
 	},
-	"author": "peoro",
-	"license": "MIT",
 	"dependencies": {
-		"npm-conf": "^1.1.3",
+		"@straits/utils": "^1.0.1",
+		"libnpmconfig": "^1.2.1",
+		"pacote": "^9.2.3",
 		"promptly": "^3.0.3"
 	},
 	"devDependencies": {
+		"@peoro/eslint-config": "^1.0.0",
 		"eslint": "^5.9.0"
 	},
+	"directories": {
+		"test": "test"
+	},
+	"author": "peoro",
+	"license": "MIT",
 	"keywords": [
 		"npm",
 		"init",
 		"npm init",
 		"initializer",
 		"straits",
-		"traits"
+		"traits",
+		"create"
 	],
-	"homepage": "https://github.com/peoro/create-straits",
-	"bugs": "https://github.com/peoro/create-straits/issues",
-	"repository": "github:peoro/create-straits"
+	"homepage": "https://github.com/peoro/straits-create",
+	"bugs": "https://github.com/peoro/straits-create/issues",
+	"repository": "github:peoro/straits-create"
 }
