@@ -1,5 +1,4 @@
 
-const fs = require('fs');
 const childProcess = require('child_process');
 const {promisify} = require('util');
 const pacote = require('pacote');
@@ -30,8 +29,8 @@ traits.*defineAndImplTraits( Object.prototype, {
 			await fn( this[field], field, this );
 		}
 	},
-	assign( obj ) {
-		Object.assign( this, obj );
+	assign( ...obj ) {
+		return Object.assign( this, ...obj );
 	},
 	defaults( obj ) {
 		use traits * from traits;
@@ -51,10 +50,10 @@ traits.*defineAndImplTraits( Object.prototype, {
 
 		const temporary = [];
 
+		const callOrValue = (str)=>typeof str === 'function' ? str.call( this ) : str;
+
 		await obj.*forEachFieldSeq( async (conf, field)=>{
-			const def = typeof conf.default === 'function' ?
-				await conf.default.call( this ) :
-				conf.default;
+			const def = await callOrValue( conf.default );
 
 			if( this[field] === undefined && conf.temporary ) {
 				temporary.push( field );
@@ -63,44 +62,21 @@ traits.*defineAndImplTraits( Object.prototype, {
 			const name = ( conf.description || field ).padStart( longestName+2, ' ' );
 			const defStr = getDefinedValue( def, `` );
 
-			const opts = Object.assign( {}, conf, {default:def, current:this[field]} );
+			const opts = Object.assign( {}, conf, {
+				value: await callOrValue( conf.value ),
+				default: def,
+				optional: await callOrValue( conf.optional ),
+				current: this[field],
+			});
 			this[field] = await prompt.ask( `>${name} [${defStr.*yellow()}]:`, opts );
 		});
 
 		// removing temporary fields
 		temporary.forEach( field=>delete this[field] );
 	},
-
-	// resolve each package `pkg` in `packages` and set on `this[pkg.name] = pkg.version`
-	// it's meant to be used as: `packageJSON.dependencies.*install( '@straits/utils', 'mocha' )`
-	install( ...packages ) {
-		return Promise.all( packages.map( async (pkg)=>{
-			return pacote.manifest( pkg ).then( (pkg)=>{
-				const prefix = getDefinedValue( getNPMConf(`save-prefix`), `^` );
-				this[ pkg.name ] = `${prefix}${pkg.version}`;
-			});
-		}) );
-	}
 });
 
-const mkdir = promisify( fs.mkdir );
-const readFile = promisify( fs.readFile );
-const writeFile = promisify( fs.writeFile );
-const copyFile = promisify( fs.copyFile );
-const stat = promisify( fs.stat );
-const fileExists = (path)=>stat( path ).then( ()=>true ).catch( ()=>false );
 const exec = promisify( childProcess.exec );
-
-async function readJSON( path ) {
-	const file = await readFile( path, `utf8` ).catch( ()=>{} );
-	if( file !== undefined ) {
-		return JSON.parse( file );
-	}
-}
-async function writeJSON( path, obj ) {
-	const json = JSON.stringify( obj, null, `\t` );
-	return writeFile( path, json, `utf8` );
-}
 
 function getDefinedValue( ...values ) {
 	for( let value of values ) {
@@ -117,11 +93,21 @@ function getNPMConf( key ) {
 		);
 	}
 }
+// resolve each package `pkg` in `packages` and returns an object `{name: version}`
+async function packagesToDeps( ...packages ) {
+	const obj = {};
+	await Promise.all( packages.map( async (pkgName)=>{
+		const pkg = await pacote.manifest( pkgName );
+		const prefix = getDefinedValue( getNPMConf(`save-prefix`), `^` );
+		obj[ pkg.name ] = `${prefix}${pkg.version}`;
+	}) );
+	return obj;
+}
 
 module.exports = {
 	traits,
-	mkdir, readFile, writeFile, copyFile, stat, fileExists, exec,
-	readJSON, writeJSON,
+	exec,
 	getDefinedValue,
 	getNPMConf,
+	packagesToDeps,
 };

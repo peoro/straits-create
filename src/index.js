@@ -19,7 +19,7 @@ function main( argc, argv ) {
 	const prompt = new Prompt();
 
 	return initPackage( prompt, [
-		ops.packageJSON( defaultConf.conf ),
+		ops.packageJson( defaultConf.conf ),
 		ops.straitsBabel,
 		ops.git,
 		ops.gitignore,

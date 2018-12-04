@@ -13,6 +13,7 @@
 	"dependencies": {
 		"@straits/utils": "^1.0.1",
 		"chalk-traits": "^1.0.0",
+		"fs-extra": "^7.0.1",
 		"libnpmconfig": "^1.2.1",
 		"pacote": "^9.2.3",
 		"promptly": "^3.0.3"
@@ -27,6 +28,7 @@
 		"eslint": "^5.9.0",
 		"mocha": "^5.2.0",
 		"nyc": "^13.1.0",
+		"sinon": "^7.1.1",
 		"straits-babel": "^2.0.0"
 	},
 	"directories": {

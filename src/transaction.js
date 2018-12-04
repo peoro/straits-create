@@ -1,4 +1,5 @@
 
+const fs = require('fs-extra');
 const utils = require('./utils.js');
 
 use traits * from utils.traits;
@@ -34,7 +35,7 @@ class Transaction {
 
 	mkdir( dir ) {
 		this.op( ()=>{
-			utils.mkdir(dir).catch( (err)=>{
+			fs.mkdir(dir).catch( (err)=>{
 				if( err.code !== 'EEXIST' ) {
 					throw err;
 				}
@@ -46,17 +47,17 @@ class Transaction {
 			()=>`create ${dest.*yellow()}:\n${data.*indent().*white().*bold()}` :
 			`create ${dest.*yellow()}`;
 
-		this.op( name, ()=>utils.writeFile(dest, data, options) );
+		this.op( name, ()=>fs.writeFile(dest, data, options) );
 	}
-	writeJSON( dest, data, {verbose=false}={} ) {
+	writeJson( dest, data, {verbose=false}={} ) {
 		const name = verbose ?
 			()=>`create ${dest.*yellow()}:\n${JSON.stringify(data, null, '  ').*indent().*white().*bold()}` :
 			`create ${dest.*yellow()}`;
 
-		this.op( name, ()=>utils.writeJSON(dest, data) );
+		this.op( name, ()=>fs.writeJson(dest, data, {spaces:'\t'}) );
 	}
 	copyFile( src, dest ) {
-		this.op( `create ${dest.*yellow()}`, ()=>utils.copyFile(src, dest) );
+		this.op( `create ${dest.*yellow()}`, ()=>fs.copyFile(src, dest) );
 	}
 	exec( cmd ) {
 		this.op( `run \`${cmd.*green()}\``, ()=>utils.exec(cmd) );

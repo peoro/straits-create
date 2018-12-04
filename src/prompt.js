@@ -44,11 +44,6 @@ class Prompt {
 		this.opts = Object.assign( {yes:false, ask:true, trim:true}, opts );
 	}
 
-	with( opts ) {
-		opts = Object.assign( {}, this.opts, opts );
-		return new Prompt( opts );
-	}
-
 	print( ...args ) {
 		if( ! this.opts.ask ) {
 			return;
@@ -80,7 +75,6 @@ class Prompt {
 
 		return promptly.prompt( msg, opts );
 	}
-
 	confirm( msg, opts={} ) {
 		opts = Object.assign( {default:'y'}, this.opts, opts, PROMPTLY_OPTIONS );
 		const {yes, ask} = opts;
@@ -93,7 +87,6 @@ class Prompt {
 		}
 		return opts.default;
 	}
-
 }
 
 module.exports = {

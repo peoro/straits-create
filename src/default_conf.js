@@ -40,8 +40,15 @@ module.exports = {
 		_github: {
 			temporary: true,
 			description: `github`,
+			value() {
+				const {repository=''} = this;
+				if( repository.match(/^github:/) ) {
+					return repository.replace( /^github:/ );
+				}
+			},
+			optional: true,
 			default() {
-				return `${this.author}/${path.basename( process.cwd() )}`;
+				return this.repository === undefined ? `${this.author}/${path.basename( process.cwd() )}` : undefined;
 			},
 		},
 
