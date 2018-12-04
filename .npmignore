@@ -2,4 +2,14 @@
 # source directories
 /src/
 /test/
-/.eslintrc*
+
+# linter
+.eslintrc.*
+
+# coverage files
+/coverage/
+.nyc_output
+*.lcov
+
+# CI
+.travis.*

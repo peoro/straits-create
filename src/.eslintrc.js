@@ -1,6 +1,6 @@
 
 module.exports = {
-	"extends": "@peoro/eslint-config",
+	"extends": "@straits/eslint-config",
 	"env": {
 		"node": true
 	}

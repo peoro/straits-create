@@ -4,17 +4,30 @@
 	"description": "npm initializer for straits",
 	"bin": "src/index.js",
 	"scripts": {
-		"pretest": "eslint index.js"
+		"watch": "babel --watch src --out-dir dist",
+		"prepare": "babel src --out-dir dist",
+		"pretest": "eslint src test",
+		"test": "nyc mocha --require @babel/register test/index.js",
+		"coverage": "nyc report --reporter=lcov"
 	},
 	"dependencies": {
 		"@straits/utils": "^1.0.1",
+		"chalk-traits": "^1.0.0",
 		"libnpmconfig": "^1.2.1",
 		"pacote": "^9.2.3",
 		"promptly": "^3.0.3"
 	},
 	"devDependencies": {
-		"@peoro/eslint-config": "^1.0.0",
-		"eslint": "^5.9.0"
+		"@babel/cli": "^7.1.5",
+		"@babel/core": "^7.1.6",
+		"@babel/node": "^7.0.0",
+		"@babel/plugin-transform-strict-mode": "^7.0.0",
+		"@babel/register": "^7.0.0",
+		"@straits/eslint-config": "^1.0.1",
+		"eslint": "^5.9.0",
+		"mocha": "^5.2.0",
+		"nyc": "^13.1.0",
+		"straits-babel": "^2.0.0"
 	},
 	"directories": {
 		"test": "test"
@@ -30,7 +43,7 @@
 		"traits",
 		"create"
 	],
-	"homepage": "https://github.com/peoro/straits-create",
+	"homepage": "https://github.com/peoro/straits-create#readme",
 	"bugs": "https://github.com/peoro/straits-create/issues",
 	"repository": "github:peoro/straits-create"
 }

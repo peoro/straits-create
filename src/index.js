@@ -1,80 +1,53 @@
-#!/usr/bin/env node
 
-const fs = require('fs');
-var path = require('path');
+const defaultConf = require('./default_conf.js');
+const {Prompt} = require('./prompt.js');
+const {Transaction} = require('./transaction.js');
+const ops = require('./ops.js');
 
+async function initPackage( prompt, operations ) {
+	const transaction = new Transaction();
+	const data = {};
 
-use traits * from require('./utils.js').traits;
-
-
-function generatePackageJSON( packageJSON, fieldConfObj, {update, yes, ask=true, path}={} ) {
-	const data = package.data;
-
-	await data.*setFields( fieldConfObj, {yes, ask} );
-
-	data.devDependencies.*defaults({
-		'@babel/cli': '^7',
-		'@babel/core': '^7',
-		'@babel/node': '^7',
-		'@babel/plugin-transform-strict-mode': '^7',
-		'@babel/register': '^7',
-		'straits-babel': '^2',
-	});
-	data.dependencies.*defaults({
-		'straits': '^1',
-	});
-	data.scripts.*defaults({
-		start: 'babel-node src/index.js',
-		prepare: 'babel src --out-dir dist',
-		test: 'mocha --require @babel/register test/index.js',
-		watch: 'babel --watch src --out-dir dist',
-	});
-
-	return packageJSON;
-}
-
-/*
-async function copyTemplate() {
-	console.log();
-	const generate = await confirm(`Generate configuration files? [yes]`, {default:'y'});
-	if( generate ) {
-		await Promise.all([
-			mkdir(`src`).catch( ()=>{} ),
-			mkdir(`test`).catch( ()=>{} ),
-		]);
-
-		const files = [
-			{ src:`templates/gitignore`, dest:`.gitignore` },
-			{ src:`templates/npmignore`, dest:`.npmignore` },
-			{ src:`templates/babelrc.js`, dest:`src/.babelrc.js` },
-			{ src:`templates/babelrc.js`, dest:`test/.babelrc.js` },
-		];
-
-		await Promise.all(
-			files.map( f=>{
-				return copyFile( `${__dirname}/${f.src}`, f.dest, fs.constants.COPYFILE_EXCL )
-					.then( ()=>console.log(`  ${f.dest}`) )
-					.catch( (err)=>console.log(`  ${f.dest} not regenerated: ${err.code}`) );
-			})
-		);
+	for( let op of operations ) {
+		await op( prompt, transaction, data );
 	}
-	return false;
-}
-*/
-const {defaultFieldConf} = require('./default_conf.js');
 
-async function main() {
-	const conf = defaultFieldConf()
-	await updatePackage();
-	await copyTemplate();
+	return transaction.commit( prompt );
 }
 
-main()
-	.catch( (err)=>{
-		if( err.message !== 'canceled' ) {
+function main( argc, argv ) {
+	const prompt = new Prompt();
+
+	return initPackage( prompt, [
+		ops.packageJSON( defaultConf.conf ),
+		ops.straitsBabel,
+		ops.git,
+		ops.gitignore,
+		ops.npmIgnore,
+		ops.readme,
+		ops.license,
+		ops.mocha,
+		ops.eslint,
+	])
+		.catch( (err)=>{
+			if( Prompt.isCancelError(err) ) {
+				prompt.print(`^C`);
+				return;
+			}
 			throw err;
-		}
-		else {
-			console.log(`^C`);
-		}
-	});
+		})
+		.then( (result)=>{
+			if( ! result ) {
+				console.log(`Nothing was altered.`);
+			}
+		});
+}
+
+module.exports = {
+	initPackage,
+	main
+};
+
+if( require.main === module ) {
+	main().catch( (err)=>void console.error( err ) );
+}

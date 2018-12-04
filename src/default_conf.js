@@ -1,21 +1,27 @@
 
 const os = require('os');
-const {promisify} = require('util');
+const path = require('path');
 
-const exec = util.promisify( require('child_process').exec );
+const {getDefinedValue, getNPMConf} = require('./utils.js');
 
-async function getDefaultFieldConf() {
-	const fieldConf = {
+module.exports = {
+	conf: {
 		name: {
 			description: `package name`,
-			suggested: path.basename( process.cwd() ),
+			default() {
+				const dirName = path.basename( process.cwd() );
+				const parentDirName = path.basename( path.dirname(process.cwd()) );
+
+				return parentDirName.startsWith(`@`) ?
+					`${parentDirName}/${dirName}` :
+					dirName;
+			},
 		},
 		version: {
-			config: 'init-version',
-			suggested: `1.0.0`,
+			default: getDefinedValue( getNPMConf('init-version'), `1.0.0` ),
 		},
 		description: {
-			optional: true,
+			default: '',
 		},
 
 		main: { value:'dist/index.js' },
@@ -24,27 +30,44 @@ async function getDefaultFieldConf() {
 		devDependencies: { value:{} },
 
 		author: {
-			npmConf: 'init-author-name',
-			suggested: os.userInfo().username,
+			default: getDefinedValue( getNPMConf('init-author-name'), os.userInfo().username ),
 		},
 		license: {
-			npmConf: 'init-license',
-			suggested: `ISC`,
+			default: getDefinedValue( getNPMConf('init-license'), `MIT` ),
 		},
 		keywords: { value:[] },
 
-		homepage: { value:'' },
-		bugs: { value:'' },
+		_github: {
+			temporary: true,
+			description: `github`,
+			default() {
+				return `${this.author}/${path.basename( process.cwd() )}`;
+			},
+		},
+
+		homepage: {
+			optional: true,
+			default() {
+				if( this._github ) {
+					return `https://github.com/${this._github}#readme`;
+				}
+			},
+		},
+		bugs: {
+			optional: true,
+			default() {
+				if( this._github ) {
+					return `https://github.com/${this._github}/issues`;
+				}
+			},
+		},
 		repository: {
 			optional: true,
-			description: `git repository`,
-			suggested: await exec(`git remote get-url origin`)
-				.then( url=>url.trim() )
-				.catch( ()=>undefined ),
+			default() {
+				if( this._github ) {
+					return `github:${this._github}`;
+				}
+			},
 		},
-	};
-}
-
-export {
-	getDefaultFieldConf
+	},
 };

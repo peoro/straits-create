@@ -2,6 +2,14 @@
 # source directories
 /src/
 /test/
-babel.config*
-.babelrc*
-.eslintrc*
+
+# linter
+.eslintrc.*
+
+# coverage files
+/coverage/
+.nyc_output
+*.lcov
+
+# CI
+.travis.*
