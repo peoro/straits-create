@@ -1,8 +1,8 @@
 {
 	"name": "@straits/create",
-	"version": "1.0.2",
+	"version": "1.0.5",
 	"description": "npm initializer for straits",
-	"bin": "src/index.js",
+	"bin": "dist/index.js",
 	"scripts": {
 		"watch": "babel --watch src --out-dir dist",
 		"prepare": "babel src --out-dir dist",

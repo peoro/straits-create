@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 
 const defaultConf = require('./default_conf.js');
 const {Prompt} = require('./prompt.js');
