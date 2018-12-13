@@ -9,27 +9,24 @@ use traits * from require('chalk-traits');
 // Our options are...
 //   `yes`: true=>all questions true, otherwise ask
 //   `ask`: true=>ask on stdin, otherwise accept default value
-// if `update` is defined, packagj.json will be updated regardless of `yes` and `ask`
 // if `yes` is defined, `ask` won't be used for confirmations
-// `update` will only be used for confirmation on updating files
 // `yes` will only be used for confirmations
 // `ask` will be used for all kinds of input
 
 // other options are:
 //   `value`: a value was already chosen - prompting nothing
 //   `current`: the current value of the field
-//   `override`: true=>change current fields, otherwise don't change current fields
+//   `overwrite`: true=>change current fields and files, otherwise don't change current fields/files
 //   `default`: default value to supply if no value was supplied or if not ask
-//   `validator`
-//   `trim`
 
 // other options inherited by promptly:
 //   `default`: default value to supply if no value was supplied
 //   `retry`
-//   `silent`: password like: user won't
-//   `input` and `output`
+//   `validator`
+//   `trim`
 
 const PROMPTLY_OPTIONS = {
+	silent: false,
 	replace: '',
 	input: process.stdin,
 	output: process.stdout,
@@ -52,9 +49,9 @@ class Prompt {
 	}
 	ask( msg, opts={} ) {
 		opts = Object.assign( {}, this.opts, opts, PROMPTLY_OPTIONS );
-		const {ask, current, value, optional} = opts;
+		const {current, overwrite, value, optional, ask} = opts;
 
-		if( current !== undefined ) {
+		if( current !== undefined && ! overwrite ) {
 			// not overriding current value
 			return current;
 		}
@@ -86,6 +83,13 @@ class Prompt {
 			return promptly.confirm( `${msg} [${(opts.default ? `y` : `n`).*yellow()}]`, opts );
 		}
 		return opts.default;
+	}
+	confirmOverwrite( msg, opts={} ) {
+		opts = Object.assign( {}, this.opts, opts );
+		if( ! opts.overwrite ) {
+			return false;
+		}
+		return this.confirm( msg, opts );
 	}
 }
 

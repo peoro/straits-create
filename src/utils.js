@@ -1,4 +1,5 @@
 
+const {readFile} = require('fs-extra');
 const childProcess = require('child_process');
 const {promisify} = require('util');
 const pacote = require('pacote');
@@ -104,10 +105,18 @@ async function packagesToDeps( ...packages ) {
 	return obj;
 }
 
+async function readTemplateFile( packageJson, path ) {
+	const {name, description} = packageJson;
+	return ( await readFile(path, `utf8`) )
+		.replace( /{{name}}/g, name )
+		.replace( /{{description}}/g, description );
+}
+
 module.exports = {
 	traits,
 	exec,
 	getDefinedValue,
 	getNPMConf,
 	packagesToDeps,
+	readTemplateFile,
 };

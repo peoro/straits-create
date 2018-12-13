@@ -12,6 +12,7 @@ async function initPackage( prompt, operations ) {
 		await op( prompt, transaction, data );
 	}
 
+	prompt.print();
 	return transaction.commit( prompt );
 }
 

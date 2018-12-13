@@ -10,6 +10,7 @@ const sym = Symbol();
 
 function opts( opts={} ) {
 	return Object.assign( {yes:false, ask:true, trim:true}, opts, {
+		silent: false,
 		replace: '',
 		input: process.stdin,
 		output: process.stdout,

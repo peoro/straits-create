@@ -16,6 +16,9 @@ class Op {
 		this.fn = fn;
 	}
 
+	commit( prompt ) {
+		return this.fn( prompt );
+	}
 	toString() {
 		if( typeof this.name === 'function' ) {
 			return this.name();
@@ -29,62 +32,96 @@ class Transaction {
 		this.ops = [];
 	}
 
-	op( name, fn ) {
-		this.ops.push( new Op(name, fn) );
+	cancel() {
+		this.ops = [];
+	}
+	confirm( prompt, msg ) {
+		const str = this.toString();
+		if( ! str ) { return true; }
+
+		prompt.print(`About to...`);
+		prompt.print( str.*indent() );
+		prompt.print();
+		return prompt.confirm( msg );
+	}
+	async commit( prompt ) {
+		let some = false;
+		for( let op of this.ops ) {
+			const str = op.toString();
+			const success = await op.commit( prompt );
+			if( str ) {
+				const img = success ? `✓`.*green() : `✗`.*red();
+				prompt.print( `${img} ${str}`.*indent() );
+			}
+			some = some || success;
+		}
+		return some;
+	}
+	toString() {
+		return this.ops.map( op=>op.toString() ).filter( str=>str ).join(`\n`);
 	}
 
-	mkdir( dir ) {
-		this.op( ()=>{
-			fs.mkdir(dir).catch( (err)=>{
+	push( ...ops ) {
+		this.ops.push( ...ops );
+	}
+	op( name, fn ) {
+		this.push( new Op(name, fn) );
+	}
+	transaction() {
+		const transaction = new this.constructor();
+		this.push( transaction );
+		return transaction;
+	}
+
+	mkdirp( dir ) {
+		this.op( ()=>fs.mkdirp(dir) );
+	}
+	exec( cmd ) {
+		this.op( `run \`${cmd.*cyan()}\``, ()=>utils.exec(cmd) );
+	}
+	writeFile( dest, data, options={} ) {
+		let opts = Object.assign( {}, options );
+		return this.op( `create ${dest.*green()}`, tryWrite(dest, (overwrite)=>{
+			const flag = overwrite ? 'w' : 'wx';
+			return fs.writeFile( dest, data, Object.assign({flag}, opts) ).then( ()=>true );
+		}) );
+	}
+	writeJson( dest, data, options={} ) {
+		let opts = Object.assign( {}, options );
+		return this.op( `create ${dest.*green()}`, tryWrite(dest, (overwrite)=>{
+			const flag = overwrite ? 'w' : 'wx';
+			return fs.writeJson( dest, data, Object.assign({flag, spaces:`\t`}, opts) ).then( ()=>true );
+		}) );
+	}
+	copyFile( src, dest, flags=0 ) {
+		return this.op( `create ${dest.*green()}`, tryWrite(dest, (overwrite)=>{
+			const owFlag = overwrite ? 0 : fs.constants.COPYFILE_EXCL;
+			return fs.copyFile( src, dest, flags|owFlag ).then( ()=>true );
+		}) );
+	}
+	async copyTemplateFile( data, src, dest, options ) {
+		const file = await utils.readTemplateFile( data, src );
+		return this.writeFile( dest, file, options );
+	}
+
+}
+
+function tryWrite( dest, fn ) {
+	return function( prompt ) {
+		return fn( false )
+			.catch( async (err)=>{
 				if( err.code !== 'EEXIST' ) {
 					throw err;
 				}
+
+				if( await prompt.confirmOverwrite(`overwrite \`${dest.*red()}\``) ) {
+					return fn( true );
+				}
+				return false;
 			});
-		});
-	}
-	writeFile( dest, data, options, {verbose=false}={} ) {
-		const name = verbose ?
-			()=>`create ${dest.*yellow()}:\n${data.*indent().*white().*bold()}` :
-			`create ${dest.*yellow()}`;
-
-		this.op( name, ()=>fs.writeFile(dest, data, options) );
-	}
-	writeJson( dest, data, {verbose=false}={} ) {
-		const name = verbose ?
-			()=>`create ${dest.*yellow()}:\n${JSON.stringify(data, null, '  ').*indent().*white().*bold()}` :
-			`create ${dest.*yellow()}`;
-
-		this.op( name, ()=>fs.writeJson(dest, data, {spaces:'\t'}) );
-	}
-	copyFile( src, dest ) {
-		this.op( `create ${dest.*yellow()}`, ()=>fs.copyFile(src, dest) );
-	}
-	exec( cmd ) {
-		this.op( `run \`${cmd.*green()}\``, ()=>utils.exec(cmd) );
-	}
-
-	async commit( prompt ) {
-		if( ! this.ops.length ) {
-			return false;
-		}
-
-		prompt.print();
-		prompt.print(`About to create the following files...`);
-		this.ops.forEach( op=>{
-			if( op.name ) {
-				prompt.print( op.toString().*indent() );
-			}
-		});
-		prompt.print();
-
-		if( await prompt.confirm(`Is this OK?`) ) {
-			for( let op of this.ops ) {
-				await op.fn();
-			}
-		}
-		return true;
-	}
+	};
 }
+
 
 module.exports = {
 	Transaction,

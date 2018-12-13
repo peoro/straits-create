@@ -1,5 +1,5 @@
 
-const {readJson, readFile, pathExists} = require('fs-extra');
+const {readJson, pathExists} = require('fs-extra');
 
 const {traits, packagesToDeps} = require('./utils.js');
 use traits * from traits;
@@ -23,7 +23,7 @@ module.exports = {
 			prompt.print();
 
 			data.writingPackageJson = true;
-			transaction.writeJson( `package.json`, packageJson, {verbose:true} );
+			transaction.writeJson( `package.json`, packageJson, {flag:'w'} );
 		};
 	},
 
@@ -32,13 +32,12 @@ module.exports = {
 
 		data.babel = true;
 
-		if( ! await pathExists(`src/.babelrc.js`) ) {
-			transaction.mkdir( `src` );
-			transaction.copyFile( `${templateDir}/babelrc.js`, `src/.babelrc.js`);
-		}
+		transaction.mkdirp( `src` );
+		transaction.copyFile( `${templateDir}/src/index.js`, `src/index.js`);
+		transaction.copyFile( `${templateDir}/src/babelrc.js`, `src/.babelrc.js`);
 
-		await packageJson.devDependencies.*assign(
-			packagesToDeps(`@babel/cli`, `@babel/core`, `@babel/node`, `@babel/plugin-transform-strict-mode`, `straits-babel`)
+		packageJson.devDependencies.*assign(
+			await packagesToDeps(`@babel/cli`, `@babel/core`, `@babel/node`, `@babel/plugin-transform-strict-mode`, `straits-babel`)
 		);
 		packageJson.scripts.*defaults({
 			start: 'babel-node src/index.js',
@@ -66,27 +65,22 @@ module.exports = {
 	async gitignore( prompt, transaction, data ) {
 		// if( data.git === false ) { return; }
 
-		if( ! await pathExists(`.gitignore`) && await prompt.confirm(`Generate .gitignore?`) ) {
+		if( await prompt.confirm(`Generate .gitignore?`) ) {
 			transaction.copyFile( `${templateDir}/gitignore`,`.gitignore`);
 		}
 	},
 
 	async npmIgnore( prompt, transaction, data ) {
-		if( ! await pathExists(`.npmignore`) && await prompt.confirm(`Generate .npmignore?`) ) {
+		if( await prompt.confirm(`Generate .npmignore?`) ) {
 			transaction.copyFile( `${templateDir}/npmignore`, `.npmignore` );
 		}
 	},
 
 	async readme( prompt, transaction, data ) {
 		const {packageJson={}} = data;
-		const {name='', description=''} = packageJson;
 
-		if( ! await pathExists(`README.md`) && await prompt.confirm(`Generate README.md?`) ) {
-			const readme = ( await readFile(`${templateDir}/README.md`, `utf8`) )
-				.replace( /{{name}}/g, name )
-				.replace( /{{description}}/g, description );
-
-			transaction.writeFile( `README.md`, readme, `utf8` );
+		if( await prompt.confirm(`Generate README.md?`) ) {
+			transaction.copyTemplateFile( packageJson, `${templateDir}/README.md`, `README.md` );
 		}
 	},
 
@@ -94,17 +88,16 @@ module.exports = {
 		const {packageJson} = data;
 
 		const templateLicensePath = `${templateDir}/licenses/${packageJson.license}`;
-		const license = await readFile( templateLicensePath, `utf8` ).catch( ()=>'' );
-
-		if( license ) {
-			if( ! await pathExists(`LICENSE`) && await prompt.confirm(`Generate LICENSE file?`) ) {
+		if( await pathExists(templateLicensePath) ) {
+			if( await prompt.confirm(`Generate LICENSE file?`) ) {
 				const {author=''} = packageJson;
 				const organization = await prompt.ask( `>  organization [${author}]:`, {default:author} );
 
-				transaction.writeFile( `LICENSE`, license
-					.replace( /{{year}}/g, new Date().getFullYear() )
-					.replace( /{{organization}}/g, organization ),
-				`utf8` );
+				const vars = {
+					year: new Date().getFullYear(),
+					organization,
+				};
+				transaction.copyTemplateFile( vars, `${templateDir}/licenses/${packageJson.license}`, `LICENSE` );
 			}
 		}
 	},
@@ -112,32 +105,42 @@ module.exports = {
 	async mocha( prompt, transaction, data ) {
 		const {packageJson} = data;
 
-		if( ! await pathExists(`.gitignore`) && ! packageJson.scripts.test && await prompt.confirm(`Setup mocha tests?`) ) {
-			await packageJson.devDependencies.*assign(
-				packagesToDeps(`@babel/register`, `mocha`)
-			);
-			packageJson.scripts.*defaults({
-				test: "mocha --require @babel/register test/index.js",
-			});
+		if( ! await prompt.confirm(`Setup mocha tests?`) ) {
+			data.tests = data.mocha = !! packageJson.devDependencies.mocha;
+			return;
+		}
 
-			if( data.babel ) {
-				transaction.mkdir( `test` );
-				transaction.copyFile( `${templateDir}/babelrc.js`, `test/.babelrc.js`);
-			}
+		data.tests = data.mocha = true;
+
+		packageJson.devDependencies.*assign(
+			await packagesToDeps(`@babel/register`, `mocha`)
+		);
+		packageJson.scripts.*defaults({
+			test: "mocha --require @babel/register test/index.js",
+		});
+
+		transaction.mkdirp( `test` );
+		transaction.copyTemplateFile( packageJson, `${templateDir}/test/index.js`, `test/index.js` );
+		if( data.babel ) {
+			transaction.copyFile( `${templateDir}/test/babelrc.js`, `test/.babelrc.js`);
 		}
 	},
 
 	async eslint( prompt, transaction, data ) {
 		const {packageJson} = data;
 
-		if( ! await pathExists(`.eslintrc.js`) && await prompt.confirm(`Create and use ESLint config?`) ) {
-			await packageJson.devDependencies.*assign(
-				packagesToDeps(`@straits/eslint-config`, `eslint`)
+		if( await prompt.confirm(`Setup ESLint?`) ) {
+			packageJson.devDependencies.*assign(
+				await packagesToDeps(`@straits/eslint-config`, `eslint`)
 			);
 			packageJson.scripts.*defaults({
-				pretest: "eslint src",
+				pretest: data.tests ? "eslint src test" : "eslint src",
 			});
-			transaction.copyFile( `${templateDir}/eslintrc.js`, `.eslintrc.js`);
+			transaction.copyFile( `${templateDir}/src/eslintrc.js`, `src/.eslintrc.js`);
+
+			if( data.mocha ) {
+				transaction.copyFile( `${templateDir}/test/eslintrc.js`, `test/.eslintrc.js`);
+			}
 		}
 	},
 };
