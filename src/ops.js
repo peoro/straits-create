@@ -37,7 +37,7 @@ module.exports = {
 		transaction.copyFile( `${templateDir}/src/babelrc.js`, `src/.babelrc.js`);
 
 		packageJson.devDependencies.*assign(
-			await packagesToDeps(`@babel/cli`, `@babel/core`, `@babel/node`, `@babel/plugin-transform-strict-mode`, `straits-babel`)
+			await packagesToDeps(`@babel/cli`, `@babel/core`, `@babel/node`, `@babel/plugin-transform-strict-mode`, `@straits/babel`)
 		);
 		packageJson.scripts.*defaults({
 			start: 'babel-node src/index.js',
