@@ -5,6 +5,7 @@ const {promisify} = require('util');
 const pacote = require('pacote');
 const npmConf = require('libnpmconfig').read();
 
+const exec = promisify( childProcess.exec );
 const {TraitSet} = require('@straits/utils');
 
 use traits * from TraitSet;
@@ -76,8 +77,6 @@ traits.*defineAndImplTraits( Object.prototype, {
 		temporary.forEach( field=>delete this[field] );
 	},
 });
-
-const exec = promisify( childProcess.exec );
 
 function getDefinedValue( ...values ) {
 	for( let value of values ) {

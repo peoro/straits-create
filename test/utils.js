@@ -1,36 +1,60 @@
 
-const sinon = require('sinon');
-
-const libnpmconfig = require('libnpmconfig');
-sinon.stub( libnpmconfig, 'read' )
-	.returns({
-		get( key ) {
-			return this[key];
-		},
-		"a-b": `yea`,
-		"x.y": `yo`,
-	});
-
-const pacote = require('pacote');
-sinon.stub( pacote, 'manifest' )
-	.withArgs(`pac1`).returns( Promise.resolve({name:`pac1`, version:`1.2.3`}) )
-	.withArgs(`pacX`).returns( Promise.resolve({name:`pacY`, version:`0.0.1`}) );
-
-
 const assert = require('assert');
-const utils = require('../src/utils.js');
-const {Prompt} = require('../src/prompt.js');
+const sinon = require('sinon');
+const libnpmconfig = require('libnpmconfig');
+const pacote = require('pacote');
+// loading `utils` and `prompt` later
+// since we need to stub `libnpmconfig` before loading them...
+//const utils = require('../src/utils.js');
+//const {Prompt} = require('../src/prompt.js');
+let utils, Prompt;
 
-use traits * from utils.traits;
 use traits * from require('chalk-traits');
 
 describe(`utils`, function(){
+	let sandbox, utilsBkp, promptBkp;
+	before(function(){
+		utilsBkp = require.cache[ require.resolve('../src/utils.js') ];
+		delete require.cache[ require.resolve('../src/utils.js') ];
+		promptBkp = require.cache[ require.resolve('../src/prompt.js') ];
+		delete require.cache[ require.resolve('../src/prompt.js') ];
+
+		sandbox = sinon.createSandbox();
+
+		sandbox.stub( libnpmconfig, 'read' )
+			.returns({
+				get( key ) {
+					return this[key];
+				},
+				"a-b": `yea`,
+				"x.y": `yo`,
+			});
+
+		sandbox.stub( pacote, 'manifest' )
+			.withArgs(`pac1`).returns( Promise.resolve({name:`pac1`, version:`1.2.3`}) )
+			.withArgs(`pacX`).returns( Promise.resolve({name:`pacY`, version:`0.0.1`}) );
+
+		utils = require('../src/utils.js');
+		const prompt = require('../src/prompt.js');
+		Prompt = prompt.Prompt;
+	});
+	after(function(){
+		sandbox.restore();
+
+		require.cache[ require.resolve('../src/utils.js') ] = utilsBkp;
+		require.cache[ require.resolve('../src/prompt.js') ] = promptBkp;
+	});
+
 	it(`string.*indent()`, function(){
+		use traits * from utils.traits;
+
 		assert.strictEqual( `hey`.*indent(), `  hey` );
 		assert.strictEqual( `hey\nyo`.*indent(), `  hey\n  yo` );
 		assert.strictEqual( `hey\nyo`.*indent(`\t`), `\they\n\tyo` );
 	});
 	it(`obj.*forEachField()`, function(){
+		use traits * from utils.traits;
+
 		const obj = {
 			a: {},
 			b: Symbol(),
@@ -45,6 +69,8 @@ describe(`utils`, function(){
 		]);
 	});
 	it(`obj.*forEachFieldSeq()`, async function(){
+		use traits * from utils.traits;
+
 		const sym = Symbol();
 		const obj = {
 			a: ()=>new Promise( resolve=>setTimeout(resolve, 50) ),
@@ -63,16 +89,22 @@ describe(`utils`, function(){
 		]);
 	});
 	it(`obj.*assign()`, function(){
+		use traits * from utils.traits;
+
 		const obj = { a:1, x:2 };
 		obj.*assign( {b:2, x:999}, {x:3} );
 		assert.deepStrictEqual( obj, {a:1, b:2, x:3} );
 	});
 	it(`obj.*defaults()`, function(){
+		use traits * from utils.traits;
+
 		const obj = { a:1, x:2 };
 		obj.*defaults( {b:2, x:999}, {x:3} );
 		assert.deepStrictEqual( obj, {a:1, b:2, x:2} );
 	});
 	it(`obj.*confFields()`, async function(){
+		use traits * from utils.traits;
+		
 		const obj = { a:1, x:2 };
 		const prompt = new Prompt({ask:false});
 		const fakePrompt = {

@@ -28,8 +28,6 @@ use traits * from require('chalk-traits');
 const PROMPTLY_OPTIONS = {
 	silent: false,
 	replace: '',
-	input: process.stdin,
-	output: process.stdout,
 };
 
 class Prompt {
@@ -38,7 +36,7 @@ class Prompt {
 	}
 
 	constructor( opts={} ) {
-		this.opts = Object.assign( {yes:false, ask:true, trim:true}, opts );
+		this.opts = Object.assign( {yes:false, ask:true, trim:true, input:process.stdin, output:process.stdout}, opts );
 	}
 
 	print( ...args ) {

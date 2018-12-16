@@ -17,8 +17,8 @@ async function initPackage( prompt, operations ) {
 	return transaction.commit( prompt );
 }
 
-function main( argc, argv ) {
-	const prompt = new Prompt();
+function main( {promptOptions}={} ) {
+	const prompt = new Prompt( promptOptions );
 
 	return initPackage( prompt, [
 		ops.packageJson( defaultConf.conf ),
