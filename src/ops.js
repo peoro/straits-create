@@ -37,7 +37,7 @@ module.exports = {
 		transaction.copyFile( `${templateDir}/src/babelrc.js`, `src/.babelrc.js`);
 
 		packageJson.devDependencies.*assign(
-			await packagesToDeps(`@babel/cli`, `@babel/core`, `@babel/node`, `@babel/plugin-transform-strict-mode`, `@straits/babel`)
+			await packagesToDeps(`babel-meta`, `@babel/plugin-transform-strict-mode`, `@straits/babel-plugin`)
 		);
 		packageJson.scripts.*defaults({
 			start: 'babel-node src/index.js',
@@ -113,7 +113,7 @@ module.exports = {
 		data.tests = data.mocha = true;
 
 		packageJson.devDependencies.*assign(
-			await packagesToDeps(`@babel/register`, `mocha`)
+			await packagesToDeps(`mocha`)
 		);
 		packageJson.scripts.*defaults({
 			test: "mocha --require @babel/register test/index.js",

@@ -1,6 +1,6 @@
 {
 	"name": "@straits/create",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"description": "npm initializer for straits",
 	"bin": "dist/index.js",
 	"scripts": {
@@ -11,23 +11,20 @@
 		"coverage": "nyc report --reporter=lcov"
 	},
 	"dependencies": {
-		"@straits/utils": "^1.0.1",
+		"@straits/utils": "^1.0.2",
 		"chalk-traits": "^1.0.0",
 		"fs-extra": "^7.0.1",
 		"libnpmconfig": "^1.2.1",
-		"pacote": "^9.2.3",
+		"pacote": "^9.3.0",
 		"promptly": "^3.0.3"
 	},
 	"devDependencies": {
-		"@babel/cli": "^7.2.0",
-		"@babel/core": "^7.2.2",
-		"@babel/node": "^7.2.2",
 		"@babel/plugin-transform-strict-mode": "^7.2.0",
-		"@babel/register": "^7.0.0",
-		"@straits/babel": "^1.0.0",
+		"@straits/babel-plugin": "^1.0.0",
 		"@straits/eslint-config": "^1.0.1",
+		"babel-meta": "^7.0.0",
 		"dev-null": "^0.1.1",
-		"eslint": "^5.10.0",
+		"eslint": "^5.11.0",
 		"mocha": "^5.2.0",
 		"nyc": "^13.1.0",
 		"sinon": "^7.2.2",
@@ -47,7 +44,7 @@
 		"traits",
 		"create"
 	],
-	"homepage": "https://github.com/peoro/straits-create#readme",
-	"bugs": "https://github.com/peoro/straits-create/issues",
-	"repository": "github:peoro/straits-create"
+	"homepage": "https://github.com/straits/create#readme",
+	"bugs": "https://github.com/straits/create/issues",
+	"repository": "github:straits/create"
 }
